@@ -8,8 +8,8 @@
 namespace visopt {
     class Tracker {
         protected:
-            Tracker() {
-                this->homography = cv::Mat::eye(3, 3, CV_64F);
+            Tracker(double focallength=500.0) {
+                this->homography = cv::Mat::eye(4, 4, CV_64F);
             }
 
         public:
@@ -21,7 +21,7 @@ namespace visopt {
             }
             virtual void init(const cv::Mat& image=cv::Mat()) = 0;
             virtual void track(const cv::Mat& image) = 0;
-            virtual void draw(cv::Mat& image) const = 0;
+            virtual void draw(cv::Mat& image) const;
             virtual void setHomography(const cv::Mat& homography) {
                 this->homography = homography.clone();
             }
@@ -32,6 +32,8 @@ namespace visopt {
         protected:
             std::vector<cv::Mat> images;
             cv::Mat homography;
+
+            cv::Mat intrinsic;
     };
 }
 

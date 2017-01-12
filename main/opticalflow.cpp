@@ -58,9 +58,12 @@ int main(int argc, char* argv[]) {
     tracker->init(color);
 
     cv::Size size = color.size();
-    double scale = (size.width+size.height)/8.0;
-    double m[3][3] = {{scale, 0.0, size.width/2.0}, {0.0, scale, size.height/2.0}, {0.0, 0.0, 1.0}};
-    tracker->setHomography(cv::Mat(3, 3, CV_64FC1, m));
+    double focal = (size.width+size.height)/8.0;
+    double m[4][4] = {{focal, 0.0,   0.0, size.width/2.0},
+                      {0.0,   focal, 0.0, size.height/2.0},
+                      {0.0,   0.0,   1.0, 1000.0},
+                      {0.0,   0.0,   0.0, 1.0}};
+    tracker->setHomography(cv::Mat(4, 4, CV_64FC1, m));
 
 	for(std::string& filename : filelist){
 		double startTime = instant::Utils::Others::GetMilliSeconds();
@@ -71,7 +74,7 @@ int main(int argc, char* argv[]) {
 		double endTime = instant::Utils::Others::GetMilliSeconds();
 
 		int waitTime = 30 - (int)(endTime - startTime);
-        waitTime = waitTime <= 0 ? 1 : waitTime;
+        waitTime = 0;//waitTime <= 0 ? 1 : waitTime;
         char ch = cv::waitKey(waitTime);
         if( ch == 'q' || ch == 'Q' )
             break;
