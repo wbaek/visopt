@@ -92,8 +92,8 @@ target/
 .ipynb_checkpoints
 
 # ignore data folder
-data/
+data
 dependency/
 test/*.png
-logs/
+logs
 
