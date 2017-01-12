@@ -59,7 +59,7 @@ DYNAMIC_LIBS += -linstant
 
 INCLUDE += -I/usr/local/include
 LIB_PATH += -L/usr/local/lib
-DYNAMIC_LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui
+DYNAMIC_LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_video -lopencv_calib3d
 
 %.o : %.cpp
 	$(GCC) $(CCFLAGS) $(INCLUDE) $(DEFINE_FLAGS) -c $< -o $@
