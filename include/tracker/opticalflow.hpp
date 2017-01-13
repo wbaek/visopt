@@ -20,6 +20,8 @@ namespace visopt {
         protected:
             std::vector<cv::Point2f> points[2];
             cv::TermCriteria termCriteria;
+
+            std::vector<cv::Point2f> point;
     };
 }
 

@@ -28,27 +28,23 @@ void Opticalflow::track(const cv::Mat& image) {
     this->points[0].resize(k);
     this->points[1].resize(k);
 
-    // calc homography
-    cv::Mat delta = cv::findHomography( this->points[0], this->points[1], cv::RANSAC, 3.0 );
-    double m[4][4] = {{delta.at<double>(0, 0), delta.at<double>(0, 1), 0.0, delta.at<double>(0, 2)},
-                      {delta.at<double>(1, 0), delta.at<double>(1, 1), 0.0, delta.at<double>(1, 2)},
-                      {delta.at<double>(2, 0), delta.at<double>(2, 1), 0.0, delta.at<double>(2, 2)},
-                      {0.0, 0.0, 0.0, 1.0} };
-    cv::Mat t = cv::Mat(4, 4, CV_64F, m);
-    this->homography = t * this->homography;
+    // calc fundamantal matrix & motion
+    cv::Mat fundamental = cv::findFundamentalMat( this->points[0], this->points[1], cv::FM_RANSAC, 0.1, 0.99, status);
+    std::tuple<cv::Mat, cv::Mat> motion = this->calcMotion( fundamental );
+    this->updateMotion( std::get<0>(motion), std::get<1>(motion) );
 
     // remove outliers
-    std::vector<cv::Point2f> points;
-    cv::perspectiveTransform(this->points[0], points, delta);
     for(size_t i=k=0; i<this->points[0].size(); i++) {
-        if( cv::norm(this->points[1][i] - points[i]) > 1.0 ) //outlier
+        if(!status[i])
             continue;
         this->points[0][k] = this->points[0][i];
         this->points[1][k++] = this->points[1][i];
     }
+    this->points[0].resize(k);
+    this->points[1].resize(k);
 
     // add new features in this frame
-    points = this->extract(gray);
+    std::vector<cv::Point2f> points = this->extract(gray);
     for(int i=0; i<points.size(); i++) {
         bool found = false;
         for(k=0; k<this->points[1].size(); k++) {

@@ -9,6 +9,9 @@
 #include <utils/others.hpp>
 #include <opencv2/opencv.hpp>
 
+#define CERES_FOUND 1
+#include <opencv2/sfm.hpp>
+
 #include "tracker/opticalflow.hpp"
 
 void help(char* execute) {
@@ -51,35 +54,17 @@ int main(int argc, char* argv[]) {
 	std::vector<std::string> filelist;
     instant::Utils::Filesystem::GetFileNames(dataPath, filelist);
 
-    std::string filename = filelist[0];
-    cv::Mat color = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
+    cv::Mat image = cv::imread(filelist[0], CV_LOAD_IMAGE_COLOR);
+    double f = 600.0;
+    double cx = image.size().width;
+    double cy = image.size().height;
 
-    visopt::Opticalflow* tracker = new visopt::Opticalflow();
-   
-    cv::Size size = color.size();
-    double focal = std::max(size.width, size.height);
-    tracker->setIntrinsic(cv::Mat(cv::Matx33d( focal,     0,  size.width/2.0,
-                                                   0, focal, size.height/2.0,
-                                                   0,     0,               1 )));
-    tracker->init(color);
-    tracker->draw(color);
-    cv::imshow("image", color);
-    cv::waitKey(0);
+    std::vector<cv::Mat> Rs_est, ts_est, points3d_estimated;
+    cv::Matx33d K = cv::Matx33d( f, 0, cx, 0, f, cy, 0, 0,  1);
 
-    for(size_t i=0; i<filelist.size(); i++) {
-        std::string filename = filelist[i];
-		double startTime = instant::Utils::Others::GetMilliSeconds();
-		cv::Mat color = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
-        tracker->track(color);
-        tracker->draw(color);
-		cv::imshow("image", color);
-		double endTime = instant::Utils::Others::GetMilliSeconds();
+    bool is_projective = true;
+    cv::sfm::reconstruct(filelist, Rs_est, ts_est, K, points3d_estimated, is_projective);
 
-		int waitTime = 30 - (int)(endTime - startTime);
-        waitTime = 0;//waitTime <= 0 ? 1 : waitTime;
-        char ch = cv::waitKey(waitTime);
-        if( ch == 'q' || ch == 'Q' )
-            break;
-	}
+
 	return 0;
 }
