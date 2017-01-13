@@ -59,10 +59,10 @@ int main(int argc, char* argv[]) {
         tracker->setImage( color );
         tracker->track();
         if(i%10 == 0) {
-            tracker->extract();
             if(i>0) {
                 tracker->reconstruct();
             }
+            tracker->extract();
         }
         tracker->draw(color);
         tracker->swap();

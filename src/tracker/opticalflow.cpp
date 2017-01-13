@@ -31,6 +31,9 @@ void Opticalflow::extract() {
 }
 
 void Opticalflow::reconstruct() {
+    for(size_t i=0; i<this->types.size(); i++) {
+        this->types[i] = 1;
+    }
 }
 
 void Opticalflow::draw(cv::Mat& image) const {
@@ -48,6 +51,16 @@ void Opticalflow::swap() {
 
 void Opticalflow::append(const std::vector<cv::Point2f>& points) {
     for(size_t i=0; i<points.size(); i++) {
+        bool found = false;
+        for(size_t j=0; j<this->currPoints.size(); j++) {
+            if( cv::norm(points[i] - this->currPoints[j]) < 3.0 ) {
+                found = true;
+                break;
+            }
+        }
+        if( found )
+            continue;
+
         this->prevPoints.push_back( points[i] );
         this->currPoints.push_back( points[i] );
         this->initPoints.push_back( points[i] );
