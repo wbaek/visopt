@@ -15,10 +15,9 @@ void Opticalflow::track() {
             status, err, cv::Size(31, 31), 3, this->termCriteria, 0, 0.001);
     this->remove( status );
 
-    // calc fundamantal matrix & motion
     cv::Mat fundamental = cv::findFundamentalMat(
             this->prevPoints, this->currPoints,
-            cv::FM_RANSAC, 0.1, 0.99, status);
+            cv::FM_RANSAC, 0.1, 0.95, status);
     this->remove( status );
 }
 
@@ -31,16 +30,19 @@ void Opticalflow::extract() {
 }
 
 void Opticalflow::reconstruct() {
+    // success
     for(size_t i=0; i<this->types.size(); i++) {
         this->types[i] = 1;
     }
+
+    this->initPoints = this->currPoints;
 }
 
 void Opticalflow::draw(cv::Mat& image) const {
-    cv::Scalar colors[2]; colors[0] = cv::Scalar(0,0,255); colors[1] = cv::Scalar(0,255,255);
+    cv::Scalar colors[2]; colors[0] = cv::Scalar(0,0,255); colors[1] = cv::Scalar(0,255,0);
     for(size_t i=0; i<this->currPoints.size(); i++) {
         cv::circle(image, this->currPoints[i], 3, colors[this->types[i]], -1, 8);
-        cv::line(image, this->currPoints[i], this->prevPoints[i], cv::Scalar(0,255,0), 1, 8);
+        cv::line(image, this->currPoints[i], this->prevPoints[i], cv::Scalar(0,255,255), 1, 8);
     }
 }
 
