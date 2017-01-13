@@ -1,27 +1,40 @@
 #ifndef __TRACKER_OPTICALFLOW_HPP__
 #define __TRACKER_OPTICALFLOW_HPP__
 
-#include "tracker/tracker.hpp"
+#include <opencv2/opencv.hpp>
+#include "base.hpp"
 
 namespace visopt {
-    class Opticalflow : public Tracker {
+    class Opticalflow : public Base {
         public:
-            Opticalflow() : Tracker() {
+            Opticalflow() {
                 this->termCriteria = cv::TermCriteria(cv::TermCriteria::COUNT|cv::TermCriteria::EPS, 20, 0.03);
             }
             virtual ~Opticalflow() {
             }
 
-            virtual void init(const cv::Mat& image=cv::Mat());
-            virtual void track(const cv::Mat& image);
+            virtual void setImage(const cv::Mat& image);
+            virtual void track();
+            virtual void extract();
+            virtual void reconstruct();
             virtual void draw(cv::Mat& image) const;
+            virtual void swap();
 
-            virtual const std::vector<cv::Point2f> extract(const cv::Mat& image) const;
         protected:
-            std::vector<cv::Point2f> points[2];
+            virtual void remove(const std::vector<unsigned char>& status);
+            virtual void append(const std::vector<cv::Point2f>& points);
+
+        protected:
             cv::TermCriteria termCriteria;
 
-            std::vector<cv::Point2f> point;
+            cv::Mat prevImage;
+            cv::Mat currImage;
+
+            std::vector<cv::Point2f> prevPoints;
+            std::vector<cv::Point2f> currPoints;
+            std::vector<cv::Point2f> initPoints;
+            std::vector<cv::Point3f> mapPoints;
+            std::vector<int> types; // 0=mapping, 1=tracking
     };
 }
 
