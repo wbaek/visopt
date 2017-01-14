@@ -59,7 +59,7 @@ DYNAMIC_LIBS += -linstant
 
 INCLUDE += -I/usr/local/include -I/usr/local/opt/eigen/include/eigen3
 LIB_PATH += -L/usr/local/lib
-DYNAMIC_LIBS += -lopencv_core -lopencv_imgcodecs -lopencv_imgproc -lopencv_highgui -lopencv_video -lopencv_calib3d -lopencv_sfm
+DYNAMIC_LIBS += `pkg-config --libs opencv`
 
 %.o : %.cpp
 	$(GCC) $(CCFLAGS) $(INCLUDE) $(DEFINE_FLAGS) -c $< -o $@

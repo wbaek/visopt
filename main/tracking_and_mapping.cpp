@@ -48,18 +48,36 @@ int main(int argc, char* argv[]) {
         help(argv[0]);
     }
 
-	std::vector<std::string> filelist;
-    instant::Utils::Filesystem::GetFileNames(dataPath, filelist);
+    std::vector<std::string> filelist;
+    cv::VideoCapture capture;
+    if (instant::Utils::Filesystem::IsDirectory(dataPath)) {
+        instant::Utils::Filesystem::GetFileNames(dataPath, filelist);
+    } else {
+        capture = cv::VideoCapture(dataPath);
+        capture.set(CV_CAP_PROP_FPS, 15);
+    }
 
     visopt::Opticalflow* tracker = new visopt::Opticalflow();
-    for(size_t i=0; i<filelist.size(); i++) {
+    size_t frames = 0;
+    char ch = ' ';
+    while( !(ch == 'q' || ch == 'Q') ) {
 		double startTime = instant::Utils::Others::GetMilliSeconds();
-        std::string filename = filelist[i];
-		cv::Mat color = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
+        cv::Mat color;
+        if(filelist.size() > 0) {
+            std::string filename = filelist[frames];
+		    color = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
+        } else {
+            capture.grab();
+            capture.retrieve(color);
+            double scale = 1.0/4.0;
+            cv::Size size(color.size().width * scale, color.size().height * scale);
+            cv::resize(color, color, size);
+        }
+
         tracker->setImage( color );
         tracker->track();
-        if(i%10 == 0) {
-            if(i>0) {
+        if(frames%10 == 0) {
+            if(frames>0) {
                 tracker->reconstruct();
             }
             tracker->extract();
@@ -70,10 +88,11 @@ int main(int argc, char* argv[]) {
 		double endTime = instant::Utils::Others::GetMilliSeconds();
 
 		int waitTime = 30 - (int)(endTime - startTime);
-        waitTime = 0;//waitTime <= 0 ? 1 : waitTime;
-        char ch = cv::waitKey(waitTime);
+        waitTime = waitTime <= 0 ? 1 : waitTime;
+        ch = cv::waitKey(waitTime);
         if( ch == 'q' || ch == 'Q' )
             break;
+        frames++;
 	}
 	return 0;
 }
