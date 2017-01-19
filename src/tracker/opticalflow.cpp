@@ -43,14 +43,7 @@ bool Opticalflow::updatePose() {
         std::vector<cv::Point2f> reprojected;
         cv::projectPoints(map, rotation, translation, this->intrinsic, cv::Mat(), reprojected);
         float reprejectError = cv::norm(cv::Mat(reprojected), cv::Mat(points), cv::NORM_L2) / reprojected.size();
-/*
-        cv::Mat rotationP = this->rotationKF.predict();
-        cv::Mat translationP = this->translationKF.predict();
-        cv::Mat rotationC = this->rotationKF.correct( rotation );
-        cv::Mat translationC = this->translationKF.correct( translation );
-        rotation = rotationC.reshape(1, 3).col(0);
-        translation = translationC.reshape(1, 3).col(0);
-*/
+        
         cv::Rodrigues(rotation, rotation);
         cv::Mat_<double> R = rotation;
         cv::Mat_<double> t = translation;
@@ -71,6 +64,19 @@ void Opticalflow::extract() {
 }
 
 void Opticalflow::reconstruct() {
+    cv::Mat p1, p2;
+    if(!this->trackAble) { 
+        std::vector<unsigned char> status;
+        p1 = cv::Mat::eye(3, 4, CV_64F);
+        p2 = this->reconstructor->pose( this->initPoints, this->currPoints, status );
+        this->remove( status );
+    } else {
+        p1 = this->initPose;
+        p2 = this->currPose;
+    }
+    this->mapPoints = this->reconstructor->reconstruct( this->initPoints, this->currPoints, p1, p2 );
+    this->initPose = p2;
+
     for(size_t i=0; i<this->types.size(); i++) {
         this->types[i] = 1;
     }

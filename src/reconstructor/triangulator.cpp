@@ -8,7 +8,7 @@ using namespace visopt;
 const cv::Mat Triangulator::pose(const std::vector<cv::Point2f>& points1, const std::vector<cv::Point2f>& points2, std::vector<unsigned char>& status) {
     cv::Mat essential = cv::findEssentialMat( points1, points2, this->intrinsic,
             cv::RANSAC, 0.99, 1.0, status );
-    if(std::abs(cv::determinant(essential)) > 1e-7) {
+    if(std::abs(cv::determinant(essential)) > 1e-3) {
         throw std::logic_error(instant::Utils::String::Format("determinant is not zero det(E)=%f", cv::determinant(essential)));
     }
 

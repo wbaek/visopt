@@ -3,6 +3,7 @@
 
 #include <opencv2/opencv.hpp>
 #include "base.hpp"
+#include "reconstructor/triangulator.hpp"
 
 namespace visopt {
     class Opticalflow : public Base {
@@ -14,15 +15,10 @@ namespace visopt {
                 this->initPose = cv::Mat::eye(3, 4, CV_64FC1);
                 this->trackAble = false;
 
-                this->rotationKF.init(6, 3, 0, CV_64F);
-                this->translationKF.init(6, 3, 0, CV_64F);
-                this->rotationKF.transitionMatrix = (cv::Mat_<double>(6, 6) << 1,0,0,1,0,0, 0,1,0,0,1,0, 0,0,1,0,0,1, 0,0,0,1,0,0, 0,0,0,0,1,0, 0,0,0,0,0,1);
-                this->translationKF.transitionMatrix = (cv::Mat_<double>(6, 6) << 1,0,0,1,0,0, 0,1,0,0,1,0, 0,0,1,0,0,1, 0,0,0,1,0,0, 0,0,0,0,1,0, 0,0,0,0,0,1);
-                this->rotationKF.measurementMatrix = cv::Mat::eye(3, 6, CV_64F);
-                this->translationKF.measurementMatrix = cv::Mat::eye(3, 6, CV_64F);
-
+                this->reconstructor = new Triangulator(intrinsic);
             }
             virtual ~Opticalflow() {
+                delete this->reconstructor;
             }
 
             virtual void setImage(const cv::Mat& image);
@@ -44,10 +40,6 @@ namespace visopt {
             cv::Mat currImage;
             bool trackAble;
 
-            cv::KalmanFilter translationKF;
-            cv::KalmanFilter rotationKF;
-
-        public:
             std::vector<cv::Point2f> prevPoints;
             std::vector<cv::Point2f> currPoints;
             std::vector<cv::Point2f> initPoints;
@@ -56,6 +48,8 @@ namespace visopt {
 
             cv::Mat initPose;
             cv::Mat currPose;
+
+            Triangulator* reconstructor;
     };
 }
 

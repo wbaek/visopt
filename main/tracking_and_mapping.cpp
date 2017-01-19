@@ -10,14 +10,13 @@
 #include <opencv2/opencv.hpp>
 
 #include "tracker/opticalflow.hpp"
-#include "reconstructor/triangulator.hpp"
 
 void help(char* execute) {
     std::cerr << "usage: " << execute << " [-h] -p IMAGE_PATH [-v]" << std::endl;
     std::cerr << "" << std::endl;
     std::cerr << "\t-h, --help                           show this help message and exit" << std::endl;
     std::cerr << "\t-p, --path      DATA_PATH            set DATA_PATH" << std::endl;
-    std::cerr << "\t-f, --focal     FOCAL_LENGTH         set FOCAL_LENGTH (default:400)" << std::endl;
+    std::cerr << "\t-f, --focal     FOCAL_LENGTH         set FOCAL_LENGTH (default:256)" << std::endl;
     std::cerr << "\t-v, --verbose                        verbose" << std::endl;
     exit(-1);
 }
@@ -33,7 +32,7 @@ int main(int argc, char* argv[]) {
 	std::string dataPath;
     bool verbose = false;
 	int argopt, optionIndex=0;
-    float focallength = 400;
+    float focallength = 256;
     while( (argopt = getopt_long(argc, argv, "hp:f:v", longOptions, &optionIndex)) != -1 ) {
         switch( argopt ) {
             case 'p':
@@ -98,22 +97,8 @@ int main(int argc, char* argv[]) {
         bool trackable = tracker->updatePose();
         if(frames%30 == 0) {
             if(frames>0) {
-                cv::Mat p1, p2;
-                if(!trackable) {
-                    std::vector<unsigned char> status;
-                    p1 = cv::Mat::eye(3, 4, CV_64FC1);
-                    p2 = reconstructor->pose( tracker->initPoints, tracker->currPoints, status);
-                    tracker->remove(status);
-                } else {
-                    p1 = tracker->initPose;
-                    p2 = tracker->currPose;
-                }
-                std::vector<cv::Point3f> map = reconstructor->reconstruct( tracker->initPoints, tracker->currPoints, p1, p2);
-
-                tracker->mapPoints = map;
-                tracker->initPose = p2;
                 tracker->reconstruct();
-                trackable = tracker->updatePose();
+                tracker->updatePose();
             }
             tracker->extract();
         }
