@@ -8,6 +8,7 @@
 #include <utils/filesystem.hpp>
 #include <utils/others.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/viz.hpp>
 
 #include "tracker/opticalflow.hpp"
 
@@ -54,6 +55,7 @@ int main(int argc, char* argv[]) {
         help(argv[0]);
     }
 
+    // setup data with visualization
     std::vector<std::string> filelist;
     cv::VideoCapture capture;
     cv::Mat color;
@@ -69,14 +71,30 @@ int main(int argc, char* argv[]) {
         cv::Size size(color.size().width * scale, color.size().height * scale);
         cv::resize(color, color, size);
     }
+    cv::viz::Viz3d window("Coordinate Frame");
+    {
+        window.setWindowSize(cv::Size(500,500));
+        window.setWindowPosition(cv::Point(0,150));
+        window.setBackgroundColor(); // black by default
+        cv::Point3d cam_pos(0.0f, 0.0f, -10.0f), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(-1.0f,0.0f,0.0f);
+        cv::Affine3f cam_pose = cv::viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
+        /*
+        cv::viz::WCameraPosition cpw(0.5); // Coordinate axes
+        cv::viz::WCameraPosition cpw_frustum(cv::Vec2f(0.889484, 0.523599)); // Camera frustum
+        window.showWidget("CPW", cpw, cam_pose);
+        window.showWidget("CPW_FRUSTUM", cpw_frustum, cam_pose);
+        */
+        window.setViewerPose(cam_pose);        
+    }
 
+    // setup tracker
     double fx=focallength, fy=focallength, cx=color.size().width/2.0, cy=color.size().height/2.0;
     cv::Matx33d intrinsic(fx, 0, cx,
                           0, fy, cy,
                           0, 0, 1);
 
+    std::vector< cv::Affine3d > path;
     visopt::Opticalflow* tracker = new visopt::Opticalflow(cv::Mat(intrinsic));
-    visopt::Triangulator* reconstructor = new visopt::Triangulator(cv::Mat(intrinsic));
     size_t frames = 0;
     char ch = ' ';
     while( !(ch == 'q' || ch == 'Q') ) {
@@ -102,16 +120,25 @@ int main(int argc, char* argv[]) {
             }
             tracker->extract();
         }
+        if(trackable) {
+            path.push_back( cv::Affine3d(tracker->getPose()) );
+        }
         tracker->draw(color);
         tracker->swap();
         cv::imshow("image", color);
+
+        window.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem());
+        window.showWidget("point_cloud", cv::viz::WCloud(tracker->getMapPoints(), cv::viz::Color::green()));
+;
+        window.showWidget("path", cv::viz::WTrajectory(path, cv::viz::WTrajectory::BOTH, 0.1, cv::viz::Color::red()));
+        window.showWidget("camera", cv::viz::WTrajectoryFrustums(path, intrinsic, 0.1, cv::viz::Color::yellow()));
+
+        window.spinOnce(1, true);
 		double endTime = instant::Utils::Others::GetMilliSeconds();
 
 		int waitTime = 30 - (int)(endTime - startTime);
-        waitTime = 0;//waitTime <= 0 ? 1 : waitTime;
+        waitTime = 1;//waitTime <= 0 ? 1 : waitTime;
         ch = cv::waitKey(waitTime);
-        if( ch == 'q' || ch == 'Q' )
-            break;
         frames++;
 	}
 	return 0;

@@ -14,7 +14,7 @@ namespace visopt {
             }
 
             const cv::Mat pose(const std::vector<cv::Point2f>& points1, const std::vector<cv::Point2f>& points2, std::vector<unsigned char>& status);
-            const std::vector<cv::Point3f> reconstruct(const std::vector<cv::Point2f>& points1, const std::vector<cv::Point2f>& points2, const cv::Mat& pose1, const cv::Mat& pose2);
+            const std::vector<cv::Point3f> reconstruct(const std::vector<cv::Point2f>& points1, const std::vector<cv::Point2f>& points2, const cv::Mat& pose1, const cv::Mat& pose2, std::vector<unsigned char>& status);
 
         protected:
             cv::Mat intrinsic;

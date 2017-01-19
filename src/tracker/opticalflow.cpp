@@ -74,7 +74,9 @@ void Opticalflow::reconstruct() {
         p1 = this->initPose;
         p2 = this->currPose;
     }
-    this->mapPoints = this->reconstructor->reconstruct( this->initPoints, this->currPoints, p1, p2 );
+    std::vector<unsigned char> status;
+    this->mapPoints = this->reconstructor->reconstruct( this->initPoints, this->currPoints, p1, p2, status );
+    this->remove( status );
     this->initPose = p2;
 
     for(size_t i=0; i<this->types.size(); i++) {

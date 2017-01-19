@@ -32,6 +32,13 @@ namespace visopt {
             virtual void remove(const std::vector<unsigned char>& status);
             virtual void append(const std::vector<cv::Point2f>& points);
 
+            virtual const std::vector<cv::Point3f> getMapPoints() const {
+                return this->mapPoints;
+            }
+            virtual const cv::Mat getPose() const {
+                return this->currPose;
+            }
+
         protected:
             cv::TermCriteria termCriteria;
 
@@ -39,17 +46,16 @@ namespace visopt {
             cv::Mat prevImage;
             cv::Mat currImage;
             bool trackAble;
+            Triangulator* reconstructor;
 
             std::vector<cv::Point2f> prevPoints;
             std::vector<cv::Point2f> currPoints;
             std::vector<cv::Point2f> initPoints;
-            std::vector<cv::Point3f> mapPoints;
             std::vector<int> types; // 0=mapping, 1=tracking
+            std::vector<cv::Point3f> mapPoints;
 
             cv::Mat initPose;
             cv::Mat currPose;
-
-            Triangulator* reconstructor;
     };
 }
 

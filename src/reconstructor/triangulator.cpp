@@ -23,7 +23,7 @@ const cv::Mat Triangulator::pose(const std::vector<cv::Point2f>& points1, const 
     return cv::Mat(pose);
 }
  
-const std::vector<cv::Point3f> Triangulator::reconstruct(const std::vector<cv::Point2f>& points1, const std::vector<cv::Point2f>& points2, const cv::Mat& pose1, const cv::Mat& pose2) {
+const std::vector<cv::Point3f> Triangulator::reconstruct(const std::vector<cv::Point2f>& points1, const std::vector<cv::Point2f>& points2, const cv::Mat& pose1, const cv::Mat& pose2, std::vector<unsigned char>& status) {
     cv::Mat reconstructedPoints;
     cv::triangulatePoints(this->intrinsic*pose1, this->intrinsic*pose2, points1, points2, reconstructedPoints );
 
@@ -31,6 +31,7 @@ const std::vector<cv::Point3f> Triangulator::reconstruct(const std::vector<cv::P
     for(size_t i=0; i<reconstructedPoints.size().width; i++) {
         cv::Mat_<double> p = reconstructedPoints.col(i);
         results.push_back( cv::Point3f( p(0)/p(3), p(1)/p(3), p(2)/p(3) ) );
+        status.push_back( 1 );
     }
     return results;
 }
