@@ -50,7 +50,7 @@ bool Opticalflow::updatePose() {
         cv::Mat predicted = this->kalmanFilter.predict();
         cv::Mat measure;
         cv::vconcat(measures, measure); 
-        cv::Mat estimated = this->kalmanFilter.correct( measure );
+        cv::Mat estimated = this->kalmanFilter.correct( measure.reshape(1, 6) );
         estimated = estimated.reshape(1, 6);
         translation = estimated.row(0);
         rotation = estimated.row(3);
