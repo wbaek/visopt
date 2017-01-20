@@ -71,20 +71,21 @@ int main(int argc, char* argv[]) {
         cv::Size size(color.size().width * scale, color.size().height * scale);
         cv::resize(color, color, size);
     }
+
+    cv::namedWindow("view");
+    cv::moveWindow("view", 0, 0);
+    cv::resizeWindow("view", color.size().width, color.size().height);
+    cv::namedWindow("debug");
+    cv::moveWindow("view", 0, color.size().height);
+    cv::resizeWindow("debug", color.size().width, color.size().height);
     cv::viz::Viz3d window("Coordinate Frame");
     {
         window.setWindowSize(cv::Size(500,500));
-        window.setWindowPosition(cv::Point(0,150));
-        window.setBackgroundColor(); // black by default
-        cv::Point3d cam_pos(10.0f,10.0f,10.0f), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(-1.0f,0.0f,0.0f);
+        window.setWindowPosition(cv::Point(color.size().width,0));
+        cv::Point3d cam_pos(200.0f,300.0f,600.0f), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(0.0f,1.0f,0.0f);
         cv::Affine3f cam_pose = cv::viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
-        /*
-        cv::viz::WCameraPosition cpw(0.5); // Coordinate axes
-        cv::viz::WCameraPosition cpw_frustum(cv::Vec2f(0.889484, 0.523599)); // Camera frustum
-        window.showWidget("CPW", cpw, cam_pose);
-        window.showWidget("CPW_FRUSTUM", cpw_frustum, cam_pose);
-        */
-        window.setViewerPose(cam_pose);        
+        window.setViewerPose(cam_pose);
+        window.spinOnce(1, true);
     }
 
     // setup tracker
@@ -94,9 +95,11 @@ int main(int argc, char* argv[]) {
                           0, 0, 1);
 
     std::vector< cv::Affine3d > path;
+    std::vector< cv::Affine3d > last(1);
     visopt::Opticalflow* tracker = new visopt::Opticalflow(cv::Mat(intrinsic));
     size_t frames = 0;
     char ch = ' ';
+    cv::waitKey(0);
     while( !(ch == 'q' || ch == 'Q') ) {
 		double startTime = instant::Utils::Others::GetMilliSeconds();
         if(filelist.size() > 0) {
@@ -109,6 +112,7 @@ int main(int argc, char* argv[]) {
             cv::Size size(color.size().width * scale, color.size().height * scale);
             cv::resize(color, color, size);
         }
+        cv::Mat debug = color.clone();
 
         tracker->setImage( color );
         tracker->track();
@@ -121,18 +125,21 @@ int main(int argc, char* argv[]) {
             tracker->extract();
         }
         if(trackable) {
-            path.push_back( cv::Affine3d(tracker->getPose()) );
+            path.push_back( cv::Affine3d(tracker->getGLPose()) );
+            last[0] = cv::Affine3d(tracker->getGLPose());
         }
         tracker->draw(color);
+        tracker->draw(debug, true);
         tracker->swap();
-        cv::imshow("image", color);
+        cv::imshow("view", color);
+        cv::imshow("debug", debug);
 
+        window.setBackgroundColor(); // black by default
         window.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem());
         window.showWidget("point_cloud", cv::viz::WCloud(tracker->getMapPoints(), cv::viz::Color::green()));
 ;
         window.showWidget("path", cv::viz::WTrajectory(path, cv::viz::WTrajectory::BOTH, 0.1, cv::viz::Color::red()));
-        window.showWidget("camera", cv::viz::WTrajectoryFrustums(path, intrinsic, 0.1, cv::viz::Color::yellow()));
-
+        window.showWidget("camera", cv::viz::WTrajectoryFrustums(last, intrinsic, 10.0, cv::viz::Color::yellow()));
         window.spinOnce(1, true);
 		double endTime = instant::Utils::Others::GetMilliSeconds();
 

@@ -47,7 +47,7 @@ bool Opticalflow::updatePose() {
         std::vector<cv::Mat> measures;
         measures.push_back( translation );
         measures.push_back( rotation );
-        this->kalmanFilter.predict();
+        cv::Mat predicted = this->kalmanFilter.predict();
         cv::Mat measure;
         cv::vconcat(measures, measure); 
         cv::Mat estimated = this->kalmanFilter.correct( measure );
@@ -62,6 +62,13 @@ bool Opticalflow::updatePose() {
                          R(1,0), R(1,1), R(1,2), t(1),
                          R(2,0), R(2,1), R(2,2), t(2) );
         this->currPose = cv::Mat(pose);
+
+        R = rotation.t();
+        t = - R * translation.t();
+        pose = cv::Matx34d(R(0,0), R(0,1), R(0,2), t(0),
+                           R(1,0), R(1,1), R(1,2), t(1),
+                           R(2,0), R(2,1), R(2,2), t(2) );
+        this->glPose = cv::Mat(pose);
     }
     return this->trackAble;
 }
@@ -98,17 +105,19 @@ void Opticalflow::reconstruct() {
     this->trackAble = true;
 }
 
-void Opticalflow::draw(cv::Mat& image) const {
-    cv::Scalar colors[2]; colors[0] = cv::Scalar(0,0,255); colors[1] = cv::Scalar(0,255,0);
-    for(size_t i=0; i<this->currPoints.size(); i++) {
-        cv::circle(image, this->currPoints[i], 3, colors[this->types[i]], -1, 8);
-        cv::line(image, this->currPoints[i], this->prevPoints[i], cv::Scalar(0,255,255), 1, 8);
-        cv::line(image, this->currPoints[i], this->initPoints[i], cv::Scalar(255,0,255), 1, 8);
+void Opticalflow::draw(cv::Mat& image, const bool debug) const {
+    if( debug ) {
+        cv::Scalar colors[2]; colors[0] = cv::Scalar(0,0,255); colors[1] = cv::Scalar(0,255,0);
+        for(size_t i=0; i<this->currPoints.size(); i++) {
+            cv::circle(image, this->currPoints[i], 3, colors[this->types[i]], -1, 8);
+            cv::line(image, this->currPoints[i], this->prevPoints[i], cv::Scalar(0,255,255), 1, 8);
+            cv::line(image, this->currPoints[i], this->initPoints[i], cv::Scalar(255,0,255), 1, 8);
+        }
     }
     if(this->trackAble && this->currPose.size().width * this->currPose.size().height >= 12) {
         cv::Matx44d axis(0.0, 10.0, 0.0, 0.0,
                          0.0, 0.0, 10.0, 0.0,
-                         10.0, 10.0, 10.0, 20.0,
+                         0.0, 0.0, 0.0, 10.0,
                          1.0, 1.0, 1.0, 1.0);
         cv::Mat projected = this->intrinsic * this->currPose * cv::Mat(axis);
 

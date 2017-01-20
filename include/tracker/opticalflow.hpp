@@ -84,7 +84,7 @@ namespace visopt {
             virtual bool updatePose();
             virtual void extract();
             virtual void reconstruct();
-            virtual void draw(cv::Mat& image) const;
+            virtual void draw(cv::Mat& image, const bool debug=false) const;
             virtual void swap();
 
             virtual void remove(const std::vector<unsigned char>& status);
@@ -95,6 +95,9 @@ namespace visopt {
             }
             virtual const cv::Mat getPose() const {
                 return this->currPose;
+            }
+            virtual const cv::Mat getGLPose() const {
+                return this->glPose;
             }
 
         protected:
@@ -115,6 +118,7 @@ namespace visopt {
 
             cv::Mat initPose;
             cv::Mat currPose;
+            cv::Mat glPose;
     };
 }
 
