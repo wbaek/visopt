@@ -17,8 +17,12 @@ namespace visopt {
 
                 this->reconstructor = new Triangulator(intrinsic);
 
-                double dt = 1.0/30.0; // time between measurements (1/FPS)
+                double dt = 1.0/15.0; // time between measurements (1/FPS)
 				this->kalmanFilter.init(18, 6, 0, CV_64F);
+                cv::setIdentity(this->kalmanFilter.processNoiseCov, cv::Scalar::all(1e-5)); 
+                cv::setIdentity(this->kalmanFilter.measurementNoiseCov, cv::Scalar::all(1e-1));
+                cv::setIdentity(this->kalmanFilter.errorCovPost, cv::Scalar::all(1));
+                cv::setIdentity(this->kalmanFilter.transitionMatrix);
 
 				/* DYNAMIC MODEL */
 				// [1 0 0 dt 0 0 dt2 0 0 0 0 0 0 0 0 0 0 0]
