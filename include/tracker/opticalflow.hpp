@@ -16,6 +16,64 @@ namespace visopt {
                 this->trackAble = false;
 
                 this->reconstructor = new Triangulator(intrinsic);
+
+                double dt = 1.0/30.0; // time between measurements (1/FPS)
+				this->kalmanFilter.init(18, 6, 0, CV_64F);
+
+				/* DYNAMIC MODEL */
+				// [1 0 0 dt 0 0 dt2 0 0 0 0 0 0 0 0 0 0 0]
+				// [0 1 0 0 dt 0 0 dt2 0 0 0 0 0 0 0 0 0 0]
+				// [0 0 1 0 0 dt 0 0 dt2 0 0 0 0 0 0 0 0 0]
+				// [0 0 0 1 0 0 dt 0 0 0 0 0 0 0 0 0 0 0]
+				// [0 0 0 0 1 0 0 dt 0 0 0 0 0 0 0 0 0 0]
+				// [0 0 0 0 0 1 0 0 dt 0 0 0 0 0 0 0 0 0]
+				// [0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0]
+				// [0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0]
+				// [0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0]
+				// [0 0 0 0 0 0 0 0 0 1 0 0 dt 0 0 dt2 0 0]
+				// [0 0 0 0 0 0 0 0 0 0 1 0 0 dt 0 0 dt2 0]
+				// [0 0 0 0 0 0 0 0 0 0 0 1 0 0 dt 0 0 dt2]
+				// [0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 dt 0 0]
+				// [0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 dt 0]
+				// [0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 dt]
+				// [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0]
+				// [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0]
+				// [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1]
+				// position
+				this->kalmanFilter.transitionMatrix.at<double>(0,3) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(1,4) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(2,5) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(3,6) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(4,7) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(5,8) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(0,6) = 0.5*std::pow(dt,2);
+				this->kalmanFilter.transitionMatrix.at<double>(1,7) = 0.5*std::pow(dt,2);
+				this->kalmanFilter.transitionMatrix.at<double>(2,8) = 0.5*std::pow(dt,2);
+
+				// orientation
+				this->kalmanFilter.transitionMatrix.at<double>(9,12) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(10,13) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(11,14) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(12,15) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(13,16) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(14,17) = dt;
+				this->kalmanFilter.transitionMatrix.at<double>(9,15) = 0.5*std::pow(dt,2);
+				this->kalmanFilter.transitionMatrix.at<double>(10,16) = 0.5*std::pow(dt,2);
+				this->kalmanFilter.transitionMatrix.at<double>(11,17) = 0.5*std::pow(dt,2);
+
+				/* MEASUREMENT MODEL */
+				// [1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+				// [0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+				// [0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+				// [0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0]
+				// [0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0]
+				// [0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0]
+				this->kalmanFilter.measurementMatrix.at<double>(0,0) = 1; // x
+				this->kalmanFilter.measurementMatrix.at<double>(1,1) = 1; // y
+				this->kalmanFilter.measurementMatrix.at<double>(2,2) = 1; // z
+				this->kalmanFilter.measurementMatrix.at<double>(3,9) = 1; // roll
+				this->kalmanFilter.measurementMatrix.at<double>(4,10) = 1; // pitch
+				this->kalmanFilter.measurementMatrix.at<double>(5,11) = 1; // yaw
             }
             virtual ~Opticalflow() {
                 delete this->reconstructor;
@@ -47,6 +105,7 @@ namespace visopt {
             cv::Mat currImage;
             bool trackAble;
             Triangulator* reconstructor;
+            cv::KalmanFilter kalmanFilter;
 
             std::vector<cv::Point2f> prevPoints;
             std::vector<cv::Point2f> currPoints;

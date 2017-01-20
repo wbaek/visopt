@@ -37,12 +37,23 @@ bool Opticalflow::updatePose() {
         cv::Mat rotation, translation;
         cv::solvePnPRansac(map, points, this->intrinsic, cv::noArray(),
                 rotation, translation,
-                false, 500, 1.0, 0.99, status);
+                false, 100, 1.0, 0.99, status);
         this->remove( status );
 
         std::vector<cv::Point2f> reprojected;
         cv::projectPoints(map, rotation, translation, this->intrinsic, cv::Mat(), reprojected);
         float reprejectError = cv::norm(cv::Mat(reprojected), cv::Mat(points), cv::NORM_L2) / reprojected.size();
+
+        std::vector<cv::Mat> measures;
+        measures.push_back( translation );
+        measures.push_back( rotation );
+        this->kalmanFilter.predict();
+        cv::Mat measure;
+        cv::vconcat(measures, measure); 
+        cv::Mat estimated = this->kalmanFilter.correct( measure );
+        estimated = estimated.reshape(1, 6);
+        translation = estimated.row(0);
+        rotation = estimated.row(3);
         
         cv::Rodrigues(rotation, rotation);
         cv::Mat_<double> R = rotation;

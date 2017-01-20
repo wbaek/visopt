@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
         window.setWindowSize(cv::Size(500,500));
         window.setWindowPosition(cv::Point(0,150));
         window.setBackgroundColor(); // black by default
-        cv::Point3d cam_pos(0.0f, 0.0f, -10.0f), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(-1.0f,0.0f,0.0f);
+        cv::Point3d cam_pos(10.0f,10.0f,10.0f), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(-1.0f,0.0f,0.0f);
         cv::Affine3f cam_pose = cv::viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
         /*
         cv::viz::WCameraPosition cpw(0.5); // Coordinate axes
