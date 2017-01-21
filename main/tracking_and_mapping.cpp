@@ -136,10 +136,12 @@ int main(int argc, char* argv[]) {
 
         window.setBackgroundColor(); // black by default
         window.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem());
-        window.showWidget("point_cloud", cv::viz::WCloud(tracker->getMapPoints(), cv::viz::Color::green()));
-;
-        window.showWidget("path", cv::viz::WTrajectory(path, cv::viz::WTrajectory::BOTH, 0.1, cv::viz::Color::red()));
-        window.showWidget("camera", cv::viz::WTrajectoryFrustums(last, intrinsic, 10.0, cv::viz::Color::yellow()));
+        if(tracker->getMapPoints().size() > 0) 
+            window.showWidget("point_cloud", cv::viz::WCloud(tracker->getMapPoints(), cv::viz::Color::green()));
+        if(path.size() > 0) {
+            window.showWidget("path", cv::viz::WTrajectory(path, cv::viz::WTrajectory::BOTH, 0.1, cv::viz::Color::red()));
+            window.showWidget("camera", cv::viz::WTrajectoryFrustums(last, intrinsic, 10.0, cv::viz::Color::yellow()));
+        }
         window.spinOnce(1, true);
 		double endTime = instant::Utils::Others::GetMilliSeconds();
 
