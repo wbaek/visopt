@@ -10,7 +10,11 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/viz.hpp>
 
+#include "extractor/goodfeaturetotrack.hpp"
 #include "tracker/opticalflow.hpp"
+#include "pose/fundamental.hpp"
+
+typedef std::tuple<std::string, double> ttuple;
 
 void help(char* execute) {
     std::cerr << "usage: " << execute << " [-h] -p IMAGE_PATH [-v]" << std::endl;
@@ -64,29 +68,19 @@ int main(int argc, char* argv[]) {
         color = cv::imread(filelist[0], CV_LOAD_IMAGE_COLOR);
     } else {
         capture = cv::VideoCapture(dataPath);
-        capture.set(CV_CAP_PROP_FPS, 30);
+        capture.set(CV_CAP_PROP_FPS, 60);
         capture.grab();
         capture.retrieve(color);
         double scale = 1.0/4.0;
         cv::Size size(color.size().width * scale, color.size().height * scale);
         cv::resize(color, color, size);
+        std::cout << size.width << "x" << size.height << std::endl;
+
     }
 
     cv::namedWindow("view");
     cv::moveWindow("view", 0, 0);
     cv::resizeWindow("view", color.size().width, color.size().height);
-    cv::namedWindow("debug");
-    cv::moveWindow("view", 0, color.size().height);
-    cv::resizeWindow("debug", color.size().width, color.size().height);
-    cv::viz::Viz3d window("Coordinate Frame");
-    {
-        window.setWindowSize(cv::Size(500,500));
-        window.setWindowPosition(cv::Point(color.size().width,0));
-        cv::Point3d cam_pos(200.0f,300.0f,600.0f), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(0.0f,1.0f,0.0f);
-        cv::Affine3f cam_pose = cv::viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
-        window.setViewerPose(cam_pose);
-        window.spinOnce(1, true);
-    }
 
     // setup tracker
     double fx=focallength, fy=focallength, cx=color.size().width/2.0, cy=color.size().height/2.0;
@@ -94,16 +88,17 @@ int main(int argc, char* argv[]) {
                           0, fy, cy,
                           0, 0, 1);
 
-    std::vector< cv::Affine3d > path;
-    std::vector< cv::Affine3d > last(1);
-    visopt::Opticalflow* tracker = new visopt::Opticalflow(cv::Mat(intrinsic));
-    size_t frames = 0;
+    visopt::Tracker* tracker = new visopt::OpticalFlow();
+    visopt::Extractor* extractor = new visopt::GoodFeatureToTrack();
+    visopt::Pose2D* pose2D = new visopt::Fundamental();
+    size_t frame = 0;
     char ch = ' ';
-    cv::waitKey(0);
+    //cv::waitKey(0);
     while( !(ch == 'q' || ch == 'Q') ) {
-		double startTime = instant::Utils::Others::GetMilliSeconds();
+        std::vector<ttuple> timestamps;
+		timestamps.push_back( ttuple("init", instant::Utils::Others::GetMilliSeconds()) );
         if(filelist.size() > 0) {
-            std::string filename = filelist[frames];
+            std::string filename = filelist[frame];
 		    color = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
         } else {
             capture.grab();
@@ -112,43 +107,42 @@ int main(int argc, char* argv[]) {
             cv::Size size(color.size().width * scale, color.size().height * scale);
             cv::resize(color, color, size);
         }
-        cv::Mat debug = color.clone();
+        timestamps.push_back( ttuple("image", instant::Utils::Others::GetMilliSeconds()) );
 
-        tracker->setImage( color );
-        tracker->track();
-        bool trackable = tracker->updatePose();
-        if(frames%30 == 0) {
-            if(frames>0) {
-                tracker->reconstruct();
-                tracker->updatePose();
-            }
-            tracker->extract();
+        std::vector<unsigned char> status = tracker->track(color);
+        tracker->remove( status );
+        if( status.size() > 0 ) {
+            pose2D->calc(tracker->getPoints(visopt::Tracker::prev), tracker->getPoints(visopt::Tracker::curr), status);
+            tracker->remove( status );
         }
-        if(trackable) {
-            path.push_back( cv::Affine3d(tracker->getGLPose()) );
-            last[0] = cv::Affine3d(tracker->getGLPose());
+        timestamps.push_back( ttuple("track", instant::Utils::Others::GetMilliSeconds()) );
+
+        if( frame%30 == 0 ){
+            tracker->append( extractor->extract(color) );
         }
+        timestamps.push_back( ttuple("extract", instant::Utils::Others::GetMilliSeconds()) );
+
         tracker->draw(color);
-        tracker->draw(debug, true);
-        tracker->swap();
         cv::imshow("view", color);
-        cv::imshow("debug", debug);
+        timestamps.push_back( ttuple("display", instant::Utils::Others::GetMilliSeconds()) );
 
-        window.setBackgroundColor(); // black by default
-        window.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem());
-        if(tracker->getMapPoints().size() > 0) 
-            window.showWidget("point_cloud", cv::viz::WCloud(tracker->getMapPoints(), cv::viz::Color::green()));
-        if(path.size() > 0) {
-            window.showWidget("path", cv::viz::WTrajectory(path, cv::viz::WTrajectory::BOTH, 0.1, cv::viz::Color::red()));
-            window.showWidget("camera", cv::viz::WTrajectoryFrustums(last, intrinsic, 10.0, cv::viz::Color::yellow()));
+        tracker->swap();
+        timestamps.push_back( ttuple("arrage", instant::Utils::Others::GetMilliSeconds()) );
+
+        std::vector<ttuple> elapsedtimes;
+        elapsedtimes.push_back( ttuple("total", std::get<1>(timestamps.back()) - std::get<1>(timestamps.front())) );
+        for(size_t i=1; i<timestamps.size(); i++) {
+            elapsedtimes.push_back( ttuple(std::get<0>(timestamps[i]), std::get<1>(timestamps[i]) - std::get<1>(timestamps[i-1])) );
         }
-        window.spinOnce(1, true);
-		double endTime = instant::Utils::Others::GetMilliSeconds();
-
-		int waitTime = 30 - (int)(endTime - startTime);
-        waitTime = 1;//waitTime <= 0 ? 1 : waitTime;
+        int waitTime = 1;//waitTime <= 0 ? 1 : waitTime;
         ch = cv::waitKey(waitTime);
-        frames++;
+        frame++;
+
+        std::string elapsed_string = "";
+        for(auto item : elapsedtimes) {
+            elapsed_string += instant::Utils::String::Format("%s:%.2fms ", std::get<0>(item).c_str(), std::get<1>(item));
+        }
+        std::cout << instant::Utils::String::Format("[#%09d] %s", frame, elapsed_string.c_str()) << std::endl;
 	}
 	return 0;
 }
