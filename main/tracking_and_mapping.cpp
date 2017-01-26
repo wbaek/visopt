@@ -14,6 +14,7 @@
 #include "tracker/opticalflow.hpp"
 #include "pose/fundamental.hpp"
 #include "core/keyframe.hpp"
+#include "reconstructor/triangulator.hpp"
 
 typedef std::tuple<std::string, double> ttuple;
 
@@ -93,6 +94,8 @@ int main(int argc, char* argv[]) {
     visopt::Extractor* extractor = new visopt::GoodFeatureToTrack();
     visopt::Pose* fundamental = new visopt::Fundamental();
     std::vector<visopt::KeyFrame> keyframes;
+    visopt::Reconstructor* reconstructor = new visopt::Triangulator(cv::Mat(intrinsic));
+
     size_t frame = 0;
     char ch = ' ';
     //cv::waitKey(0);
@@ -127,6 +130,10 @@ int main(int argc, char* argv[]) {
             keyframe.points = tracker->getPoints();
             keyframe.indicies = tracker->getIndicies();
             keyframes.push_back( keyframe );
+
+            if( frame > 0 ) {
+                std::vector<cv::Point3f> mapPoints = reconstructor->calc(keyframes);
+            }
         }
         timestamps.push_back( ttuple("extract", instant::Utils::Others::GetMilliSeconds()) );
 
