@@ -8,9 +8,20 @@
 namespace visopt {
 class Map : public Base {
     public:
-        enum Status {outlier=-1, initial=0, reconstructed=1};
+        enum Status {unset=0, reconstructed=1, outlier=100};
         virtual const size_t size() const {
             return this->points.size();
+        }
+
+        virtual const std::vector<int> unionIndicies(const std::vector<int>& idx_list) const {
+            std::vector<int> selected;
+            for(auto idx : idx_list) {
+                if(0 <= idx && idx < this->points.size())
+                    if( this->status.at(idx) == Map::reconstructed ) {
+                        selected.push_back( idx );
+                    }
+            }
+            return selected;
         }
         virtual const std::vector<cv::Point3f> getPoints(const std::vector<int>& idx_list = std::vector<int>()) const {
             if(idx_list.size() == 0) {
@@ -19,9 +30,21 @@ class Map : public Base {
                 std::vector<cv::Point3f> selected;
                 for(auto idx : idx_list) {
                     if(0 <= idx && idx < this->points.size())
-                        selected.push_back( this->points.at(idx) );
+                        if( this->status.at(idx) == Map::reconstructed ) {
+                            selected.push_back( this->points.at(idx) );
+                        }
                 }
                 return selected;
+            }
+        }
+        virtual void append(const std::vector<cv::Point3f>& points, const std::vector<int>& indicies) {
+            auto maxIndex = std::max((int)this->points.size(), *std::max_element(indicies.begin(), indicies.end()));
+            this->points.resize( maxIndex );
+            this->status.resize( maxIndex );
+            
+            for(size_t i=0; i<indicies.size(); i++) {
+                this->points[ indicies[i] ] = points[i];
+                this->status[ indicies[i] ] = Map::reconstructed;
             }
         }
 

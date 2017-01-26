@@ -13,8 +13,10 @@
 #include "extractor/goodfeaturetotrack.hpp"
 #include "tracker/opticalflow.hpp"
 #include "pose/fundamental.hpp"
+#include "pose/camera_pose.hpp"
 #include "core/keyframe.hpp"
 #include "reconstructor/triangulator.hpp"
+#include "core/map.hpp"
 
 typedef std::tuple<std::string, double> ttuple;
 
@@ -71,8 +73,10 @@ int main(int argc, char* argv[]) {
     } else {
         capture = cv::VideoCapture(dataPath);
         capture.set(CV_CAP_PROP_FPS, 60);
-        capture.grab();
-        capture.retrieve(color);
+        for(int i=0; i<100; i++){
+            capture.grab();
+            capture.retrieve(color);
+        }
         double scale = 1.0/4.0;
         cv::Size size(color.size().width * scale, color.size().height * scale);
         cv::resize(color, color, size);
@@ -93,8 +97,10 @@ int main(int argc, char* argv[]) {
     visopt::Tracker* tracker = new visopt::OpticalFlow();
     visopt::Extractor* extractor = new visopt::GoodFeatureToTrack();
     visopt::Pose* fundamental = new visopt::Fundamental();
+    visopt::Pose* camera = new visopt::CameraPose(cv::Mat(intrinsic));
     std::vector<visopt::KeyFrame> keyframes;
     visopt::Reconstructor* reconstructor = new visopt::Triangulator(cv::Mat(intrinsic));
+    visopt::Map map;
 
     size_t frame = 0;
     char ch = ' ';
@@ -103,6 +109,7 @@ int main(int argc, char* argv[]) {
         std::vector<ttuple> timestamps;
 		timestamps.push_back( ttuple("init", instant::Utils::Others::GetMilliSeconds()) );
         if(filelist.size() > 0) {
+            if( frame >= filelist.size() ) break;
             std::string filename = filelist[frame];
 		    color = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
         } else {
@@ -122,11 +129,33 @@ int main(int argc, char* argv[]) {
         }
         timestamps.push_back( ttuple("track", instant::Utils::Others::GetMilliSeconds()) );
 
-        if( frame%15 == 0 ){
+        bool estimatedPose = false;
+        cv::Mat pose = cv::Mat::eye(3, 4, CV_64F);
+        std::vector<int> indicies = map.unionIndicies( tracker->getIndicies() );
+        if(indicies.size() > 0) {
+            visopt::KeyFrame currentFrame;
+            currentFrame.image = color;
+            currentFrame.points = tracker->getPoints();
+            currentFrame.indicies = tracker->getIndicies();
+
+            std::vector<cv::Point3f> mapPoints = map.getPoints( indicies );
+            std::vector<cv::Point2f> imagePoints = currentFrame.getPoints( indicies );
+            pose = camera->calc(mapPoints, imagePoints, status);
+            for(size_t i=0; i<status.size(); i++) {
+                if(status[i]) continue;
+                map.status[ indicies[i] ] = visopt::Map::outlier;
+            }
+
+            estimatedPose = true;
+        }
+        timestamps.push_back( ttuple("pose", instant::Utils::Others::GetMilliSeconds()) );
+
+        if( frame%30 == 0 ){
             tracker->append( extractor->extract(color) );
 
             visopt::KeyFrame keyframe;
             keyframe.image = color;
+            keyframe.pose = pose;
             keyframe.points = tracker->getPoints();
             keyframe.indicies = tracker->getIndicies();
             keyframes.push_back( keyframe );
@@ -136,12 +165,17 @@ int main(int argc, char* argv[]) {
                 for(size_t i=keyframes.size()-2; i<keyframes.size(); i++) {
                     last2frames.push_back( keyframes[i] );
                 }
+                std::vector<int> indicies = visopt::Triangulator::unionIndicies(last2frames);
                 std::vector<cv::Point3f> mapPoints = reconstructor->calc(last2frames);
+                map.append( mapPoints, indicies );
             }
         }
         timestamps.push_back( ttuple("extract", instant::Utils::Others::GetMilliSeconds()) );
 
         tracker->draw(color);
+        if(estimatedPose) {
+            camera->draw(color, cv::Mat(intrinsic)*pose);
+        }
         cv::imshow("view", color);
         timestamps.push_back( ttuple("display", instant::Utils::Others::GetMilliSeconds()) );
 

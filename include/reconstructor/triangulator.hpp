@@ -14,6 +14,7 @@ class Triangulator : public Reconstructor {
         virtual ~Triangulator() {
         }
 
+        static const std::vector<int> unionIndicies(const std::vector<KeyFrame>& keyframes) ;
         virtual const std::vector<cv::Point3f> calc(const std::vector<KeyFrame>& keyframes) const;
         
     protected:

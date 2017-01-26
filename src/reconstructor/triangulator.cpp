@@ -3,10 +3,19 @@
 #include "pose/camera_pose.hpp"
 
 using namespace visopt;
+const std::vector<int> Triangulator::unionIndicies(const std::vector<KeyFrame>& keyframes) {
+    if( keyframes.size() < 2 ) {
+        throw std::logic_error( instant::Utils::String::Format("keyframes(%d) is more than 2", keyframes.size()) );
+    }
+
+    KeyFrame frame1 = keyframes.front();
+    KeyFrame frame2 = keyframes.back();
+    return KeyFrame::unionIndicies( frame1.indicies, frame2.indicies );
+}
+
 const std::vector<cv::Point3f> Triangulator::calc(const std::vector<KeyFrame>& keyframes) const {
     if( keyframes.size() < 2 ) {
         throw std::logic_error( instant::Utils::String::Format("keyframes(%d) is more than 2", keyframes.size()) );
-        return std::vector<cv::Point3f>();
     }
 
     KeyFrame frame1 = keyframes.front();

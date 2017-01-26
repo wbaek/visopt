@@ -20,16 +20,18 @@ const cv::Mat CameraPose::calc(const std::vector<cv::Point3f>& pt1, const std::v
     cv::solvePnPRansac(pt1, pt2, this->intrinsic, cv::noArray(),
             rvec, tvec,
             /*useExtrinsicGuess=*/false,
-            /*iterationsCount=*/100, /*reprojectionError=*/8.0, /*minInliersCount=*/int(pt1.size()*0.75),
+            /*iterationsCount=*/100, /*reprojectionError=*/3.0, /*confidence=*/0.99,
             /*inliers=*/status);
 
+    /*
     std::vector<cv::Point2f> reprojected;
     cv::projectPoints(pt1, rvec, tvec, this->intrinsic, cv::Mat(), reprojected);
     for(size_t i=0; i<status.size(); i++) {
-        if(status[i] && cv::norm(cv::Mat(reprojected[i]), cv::Mat(pt2[i]), cv::NORM_L2) > 2.0) {
+        if(status[i] && cv::norm(cv::Mat(reprojected[i]), cv::Mat(pt2[i]), cv::NORM_L2) > 3.0) {
             status[i] = 0;
         }
     }
+    //*/
 
     cv::Mat rotation;
     cv::Rodrigues(rvec, rotation);
@@ -39,6 +41,5 @@ const cv::Mat CameraPose::calc(const std::vector<cv::Point3f>& pt1, const std::v
     cv::Matx34d pose(R(0,0), R(0,1), R(0,2), t(0),
                      R(1,0), R(1,1), R(1,2), t(1),
                      R(2,0), R(2,1), R(2,2), t(2) );
-
     return cv::Mat(pose);
 }
