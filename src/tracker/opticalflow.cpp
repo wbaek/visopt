@@ -6,7 +6,11 @@ OpticalFlow::OpticalFlow() : Tracker() {
 }
 
 const std::vector<unsigned char> OpticalFlow::track(const cv::Mat& image) {
-    cv::cvtColor(image, this->images[Tracker::curr], cv::COLOR_BGR2GRAY);
+    cv::Mat gray;
+    cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(gray, gray, /*kernelSize=*/cv::Size(7, 7), /*sigmaX=*/1.0, /*sigmaY=*/1.0);
+    this->images[Tracker::curr] = gray;
+
     if(this->images[0].size() != this->images[1].size()) {
         //TODO: throw exception
         return std::vector<unsigned char>();

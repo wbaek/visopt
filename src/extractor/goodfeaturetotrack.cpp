@@ -8,6 +8,7 @@ GoodFeatureToTrack::GoodFeatureToTrack() {
 const std::vector<cv::Point2f> GoodFeatureToTrack::extract(const cv::Mat& image) const {
     cv::Mat gray;
     cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(gray, gray, /*kernelSize=*/cv::Size(7, 7), /*sigmaX=*/1.0, /*sigmaY=*/1.0);
 
     std::vector<cv::Point2f> points;
     cv::goodFeaturesToTrack(gray, points, 200, 0.01, 10, cv::Mat(), 2, 0, 0.04);

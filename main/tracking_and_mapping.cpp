@@ -25,7 +25,7 @@ void help(char* execute) {
     std::cerr << "" << std::endl;
     std::cerr << "\t-h, --help                           show this help message and exit" << std::endl;
     std::cerr << "\t-p, --path      DATA_PATH            set DATA_PATH" << std::endl;
-    std::cerr << "\t-f, --focal     FOCAL_LENGTH         set FOCAL_LENGTH (default:256)" << std::endl;
+    std::cerr << "\t-f, --focal     FOCAL_LENGTH         set FOCAL_LENGTH (default:245)" << std::endl;
     std::cerr << "\t-v, --verbose                        verbose" << std::endl;
     exit(-1);
 }
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 	std::string dataPath;
     bool verbose = false;
 	int argopt, optionIndex=0;
-    float focallength = 256;
+    float focallength = 245;
     while( (argopt = getopt_long(argc, argv, "hp:f:v", longOptions, &optionIndex)) != -1 ) {
         switch( argopt ) {
             case 'p':
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
     } else {
         capture = cv::VideoCapture(dataPath);
         capture.set(CV_CAP_PROP_FPS, 60);
-        for(int i=0; i<100; i++){
+        for(int i=0; i<1; i++){
             capture.grab();
             capture.retrieve(color);
         }
@@ -117,6 +117,7 @@ int main(int argc, char* argv[]) {
             capture.retrieve(color);
             double scale = 1.0/4.0;
             cv::Size size(color.size().width * scale, color.size().height * scale);
+            if( size.width <= 0 || size.height <= 0 ) break;
             cv::resize(color, color, size);
         }
         timestamps.push_back( ttuple("image", instant::Utils::Others::GetMilliSeconds()) );
@@ -141,10 +142,12 @@ int main(int argc, char* argv[]) {
             std::vector<cv::Point3f> mapPoints = map.getPoints( indicies );
             std::vector<cv::Point2f> imagePoints = currentFrame.getPoints( indicies );
             pose = camera->calc(mapPoints, imagePoints, status);
+            /*
             for(size_t i=0; i<status.size(); i++) {
                 if(status[i]) continue;
                 map.status[ indicies[i] ] = visopt::Map::outlier;
             }
+            //*/
 
             estimatedPose = true;
         }
