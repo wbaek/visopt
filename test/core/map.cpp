@@ -33,7 +33,7 @@ TEST(Map, getPoints_selected) {
     map.points.push_back( cv::Point3f(2, 0, 0) );
     map.points.push_back( cv::Point3f(3, 0, 0) );
 
-    std::vector<size_t> idx_list;
+    std::vector<int> idx_list;
     idx_list.push_back(1);
     idx_list.push_back(3);
 

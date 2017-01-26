@@ -13,6 +13,7 @@
 #include "extractor/goodfeaturetotrack.hpp"
 #include "tracker/opticalflow.hpp"
 #include "pose/fundamental.hpp"
+#include "core/keyframe.hpp"
 
 typedef std::tuple<std::string, double> ttuple;
 
@@ -91,6 +92,7 @@ int main(int argc, char* argv[]) {
     visopt::Tracker* tracker = new visopt::OpticalFlow();
     visopt::Extractor* extractor = new visopt::GoodFeatureToTrack();
     visopt::Pose2D* pose2D = new visopt::Fundamental();
+    std::vector<visopt::KeyFrame> keyframes;
     size_t frame = 0;
     char ch = ' ';
     //cv::waitKey(0);
@@ -117,8 +119,14 @@ int main(int argc, char* argv[]) {
         }
         timestamps.push_back( ttuple("track", instant::Utils::Others::GetMilliSeconds()) );
 
-        if( frame%30 == 0 ){
+        if( frame%15 == 0 ){
             tracker->append( extractor->extract(color) );
+
+            visopt::KeyFrame keyframe;
+            keyframe.image = color;
+            keyframe.points = tracker->getPoints();
+            keyframe.indicies = tracker->getIndicies();
+            keyframes.push_back( keyframe );
         }
         timestamps.push_back( ttuple("extract", instant::Utils::Others::GetMilliSeconds()) );
 
@@ -126,6 +134,8 @@ int main(int argc, char* argv[]) {
         cv::imshow("view", color);
         timestamps.push_back( ttuple("display", instant::Utils::Others::GetMilliSeconds()) );
 
+        int trackedCount = tracker->getPoints().size();
+        int lastIdx = tracker->getIndicies().back();
         tracker->swap();
         timestamps.push_back( ttuple("arrage", instant::Utils::Others::GetMilliSeconds()) );
 
@@ -140,9 +150,9 @@ int main(int argc, char* argv[]) {
 
         std::string elapsed_string = "";
         for(auto item : elapsedtimes) {
-            elapsed_string += instant::Utils::String::Format("%s:%.2fms ", std::get<0>(item).c_str(), std::get<1>(item));
+            elapsed_string += instant::Utils::String::Format("%s:%.1fms ", std::get<0>(item).c_str(), std::get<1>(item));
         }
-        std::cout << instant::Utils::String::Format("[#%09d] %s", frame, elapsed_string.c_str()) << std::endl;
+        std::cout << instant::Utils::String::Format("[#%05d] %s tracked:%05d lastIdx:%05d", frame, elapsed_string.c_str(), trackedCount, lastIdx) << std::endl;
 	}
 	return 0;
 }

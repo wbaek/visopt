@@ -1,7 +1,7 @@
 #include "tracker/opticalflow.hpp"
 
 using namespace visopt;
-OpticalFlow::OpticalFlow() {
+OpticalFlow::OpticalFlow() : Tracker() {
     this->termCriteria = cv::TermCriteria(cv::TermCriteria::COUNT|cv::TermCriteria::EPS, 20, 0.03);
 }
 

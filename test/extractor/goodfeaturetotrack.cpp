@@ -15,7 +15,7 @@ TEST(Map, extract) {
     image = cv::imread("datas/im000.png");
 
     std::vector<cv::Point2f> features = extractor->extract( image );
-    EXPECT_EQ(130, features.size());
+    EXPECT_EQ(100, features.size());
 
     delete extractor;
 }

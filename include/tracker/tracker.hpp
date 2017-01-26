@@ -9,6 +9,9 @@ namespace visopt{
 class Tracker : public Base {
     public:
         enum Selector { prev=0, curr=1 };
+        Tracker() {
+            this->lastIdx = 0;
+        }
         virtual ~Tracker() {
         }
         virtual void init(const cv::Mat& image, const std::vector<cv::Point2f>& points, const std::vector<int>& indicies=std::vector<int>());
@@ -30,6 +33,7 @@ class Tracker : public Base {
         cv::Mat images[2];
         std::vector<cv::Point2f> points[2];
         std::vector<int> indicies[2];
+        int lastIdx = 0;
 };
 }
 

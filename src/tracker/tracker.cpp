@@ -42,14 +42,14 @@ void Tracker::append(const std::vector<cv::Point2f>& points, const Selector inde
         }
         if( found ) continue;
         this->points[index].push_back( points[i] );
-        this->indicies[index].push_back( -1 );
+        this->indicies[index].push_back( this->lastIdx++ );
     }
 }
 
 void Tracker::swap() {
     std::swap( images[0], images[1] );
     std::swap( points[0], points[1] );
-    std::swap( indicies[0], indicies[1] );
+    indicies[0] = indicies[1];
 }
 
 void Tracker::remove(const std::vector<unsigned char>& status) {
