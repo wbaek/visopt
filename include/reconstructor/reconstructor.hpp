@@ -4,6 +4,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include "base.hpp"
+#include "core/keyframe.hpp"
 
 namespace visopt{
 class Reconstructor : public Base {
@@ -11,7 +12,7 @@ class Reconstructor : public Base {
         virtual ~Reconstructor() {
         }
 
-        virtual const cv::Mat calc(const std::vector<cv::Point2f>& pt1, const std::vector<cv::Point2f>& pt2, std::vector<unsigned char>& status) const = 0;
+        virtual const std::vector<cv::Point3f> calc(const std::vector<KeyFrame>& keyframes) const = 0;
 };
 }
 

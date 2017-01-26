@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
 
     visopt::Tracker* tracker = new visopt::OpticalFlow();
     visopt::Extractor* extractor = new visopt::GoodFeatureToTrack();
-    visopt::Pose2D* pose2D = new visopt::Fundamental();
+    visopt::Pose* fundamental = new visopt::Fundamental();
     std::vector<visopt::KeyFrame> keyframes;
     size_t frame = 0;
     char ch = ' ';
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
         std::vector<unsigned char> status = tracker->track(color);
         tracker->remove( status );
         if( status.size() > 0 ) {
-            pose2D->calc(tracker->getPoints(visopt::Tracker::prev), tracker->getPoints(visopt::Tracker::curr), status);
+            fundamental->calc(tracker->getPoints(visopt::Tracker::prev), tracker->getPoints(visopt::Tracker::curr), status);
             tracker->remove( status );
         }
         timestamps.push_back( ttuple("track", instant::Utils::Others::GetMilliSeconds()) );

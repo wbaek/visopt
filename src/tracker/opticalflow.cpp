@@ -16,7 +16,10 @@ const std::vector<unsigned char> OpticalFlow::track(const cv::Mat& image) {
     std::vector<float> err;
     cv::calcOpticalFlowPyrLK(this->images[Tracker::prev], this->images[Tracker::curr],
             this->points[Tracker::prev], this->points[Tracker::curr],
-            status, err, cv::Size(15, 15), 2, this->termCriteria, 10, 0.001);
+            status, err,
+            cv::Size(15, 15), /*maxlevel=*/2,
+            this->termCriteria,
+            cv::OPTFLOW_LK_GET_MIN_EIGENVALS, /*minEigThreshold=*/0.001);
 
     return status;
 }

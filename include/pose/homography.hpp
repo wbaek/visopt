@@ -1,10 +1,10 @@
 #ifndef __POSE_HOMOGRAPHY_HPP__
 #define __POSE_HOMOGRAPHY_HPP__
 
-#include "pose/pose2d.hpp"
+#include "pose/pose.hpp"
 
 namespace visopt{
-class Homography : public Pose2D {
+class Homography : public Pose {
     public:
         virtual ~Homography() {
         }

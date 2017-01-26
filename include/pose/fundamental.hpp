@@ -1,10 +1,10 @@
 #ifndef __POSE_FUNDAMENTAL_HPP__
 #define __POSE_FUNDAMENTAL_HPP__
 
-#include "pose/pose2d.hpp"
+#include "pose/pose.hpp"
 
 namespace visopt{
-class Fundamental : public Pose2D {
+class Fundamental : public Pose {
     public:
         virtual ~Fundamental() {
         }

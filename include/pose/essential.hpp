@@ -1,10 +1,10 @@
 #ifndef __POSE_ESSENTIAL_HPP__
 #define __POSE_ESSENTIAL_HPP__
 
-#include "pose/pose2d.hpp"
+#include "pose/pose.hpp"
 
 namespace visopt{
-class Essential : public Pose2D {
+class Essential : public Pose {
     public:
         Essential(const cv::Mat& intrinsic) {
             this->intrinsic = intrinsic;
