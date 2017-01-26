@@ -132,7 +132,11 @@ int main(int argc, char* argv[]) {
             keyframes.push_back( keyframe );
 
             if( frame > 0 ) {
-                std::vector<cv::Point3f> mapPoints = reconstructor->calc(keyframes);
+                std::vector<visopt::KeyFrame> last2frames;
+                for(size_t i=keyframes.size()-2; i<keyframes.size(); i++) {
+                    last2frames.push_back( keyframes[i] );
+                }
+                std::vector<cv::Point3f> mapPoints = reconstructor->calc(last2frames);
             }
         }
         timestamps.push_back( ttuple("extract", instant::Utils::Others::GetMilliSeconds()) );
