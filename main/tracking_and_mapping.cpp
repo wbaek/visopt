@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
     cv::moveWindow("view", 0, 0);
     cv::resizeWindow("view", color.size().width, color.size().height);
     cv::namedWindow("debug");
-    cv::moveWindow("view", 0, color.size().height);
+    cv::moveWindow("debug", 0, color.size().height);
     cv::resizeWindow("debug", color.size().width, color.size().height);
     cv::viz::Viz3d window("Coordinate Frame");
     {

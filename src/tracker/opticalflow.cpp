@@ -12,13 +12,13 @@ void Opticalflow::track() {
     std::vector<float> err;
     cv::calcOpticalFlowPyrLK(this->prevImage, this->currImage,
             this->prevPoints, this->currPoints,
-            status, err, cv::Size(31, 31), 3, this->termCriteria, 0, 0.001);
+            status, err, cv::Size(31, 31), 2, this->termCriteria, cv::OPTFLOW_LK_GET_MIN_EIGENVALS, 0.001);
     this->remove( status );
 
     if( this->trackAble == false ) {
         cv::Mat fundamental = cv::findFundamentalMat(
                 this->prevPoints, this->currPoints,
-                cv::FM_RANSAC, 1.0, 0.99, status);
+                cv::FM_RANSAC, 2.0, 0.99, status);
         this->remove( status );
     }
 }
@@ -37,8 +37,8 @@ bool Opticalflow::updatePose() {
         cv::Mat rotation, translation;
         cv::solvePnPRansac(map, points, this->intrinsic, cv::noArray(),
                 rotation, translation,
-                false, 100, 1.0, 0.99, status);
-        this->remove( status );
+                false, 100, 8.0, 0.95, status);
+        //this->remove( status );
 
         std::vector<cv::Point2f> reprojected;
         cv::projectPoints(map, rotation, translation, this->intrinsic, cv::Mat(), reprojected);
@@ -174,4 +174,9 @@ void Opticalflow::remove(const std::vector<unsigned char>& status) {
         this->types[k]      = this->types[i];
         k++;
     }
+    this->prevPoints.resize(k);
+    this->currPoints.resize(k);
+    this->initPoints.resize(k);
+    this->mapPoints.resize(k);
+    this->types.resize(k);
 }
