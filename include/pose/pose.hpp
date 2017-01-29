@@ -17,6 +17,12 @@ class Pose : public Base {
         virtual const cv::Mat calc(const std::vector<cv::Point3f>& pt1, const std::vector<cv::Point2f>& pt2, std::vector<unsigned char>& status) const {
             throw std::logic_error("Pose calc 3D-to-2D method is not implemented");
         }
+        static const cv::Mat toGL(const cv::Mat& pose) {
+            cv::Matx33d converter( 1.0,  0.0,  0.0,
+                                   0.0, -1.0,  0.0,
+                                   0.0,  0.0, -1.0 );
+            return cv::Mat(converter) * pose;
+        }
 
         virtual void draw(cv::Mat& image, const cv::Mat& projection, double scale=100.0) {
             cv::Matx44d axis(0.0, scale,   0.0,   0.0,

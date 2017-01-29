@@ -88,22 +88,33 @@ int main(int argc, char* argv[]) {
     cv::namedWindow("view");
     cv::moveWindow("view", 0, 0);
     cv::resizeWindow("view", color.size().width, color.size().height);
+    cv::viz::Viz3d window("Coordinate Frame");
+    {
+        window.setWindowSize(cv::Size(500,500));
+        window.setWindowPosition(cv::Point(color.size().width,30));
+        cv::Point3d cam_pos(200.0f,300.0f,600.0f), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(0.0f,1.0f,0.0f);
+        cv::Affine3f cam_pose = cv::viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
+        window.setViewerPose(cam_pose);
+        window.spinOnce(1, true);
+    }
 
     // setup tracker
     double fx=focallength, fy=focallength, cx=color.size().width/2.0, cy=color.size().height/2.0;
-    cv::Matx33d intrinsic(fx, 0, cx,
-                          0, fy, cy,
-                          0, 0, 1);
+    cv::Mat intrinsic = cv::Mat( cv::Matx33d(fx, 0, cx,
+                                             0, fy, cy,
+                                             0,  0,  1) );
 
     visopt::Tracker* tracker = new visopt::OpticalFlow();
     visopt::Extractor* extractor = new visopt::GoodFeatureToTrack();
     visopt::Pose* fundamental = new visopt::Fundamental();
-    visopt::Pose* camera = new visopt::CameraPose(cv::Mat(intrinsic));
+    visopt::Pose* camera = new visopt::CameraPose(intrinsic);
     visopt::KalmanFilter* kalmanFilter = new visopt::KalmanFilter();
+    visopt::Reconstructor* reconstructor = new visopt::Triangulator(intrinsic);
     std::vector<visopt::KeyFrame> keyframes;
-    visopt::Reconstructor* reconstructor = new visopt::Triangulator(cv::Mat(intrinsic));
     visopt::Map map;
 
+    std::vector< cv::Affine3d > path;
+    std::vector< cv::Affine3d > last(1);
     size_t frame = 0;
     char ch = ' ';
     //cv::waitKey(0);
@@ -152,7 +163,9 @@ int main(int argc, char* argv[]) {
                 map.status[ indicies[i] ] = visopt::Map::outlier;
             }
             //*/
-
+            
+            path.push_back( cv::Affine3d( visopt::Pose::toGL(pose) ) );
+            last[0] = cv::Affine3d( visopt::Pose::toGL(pose) );
             estimatedPose = true;
         }
         timestamps.push_back( ttuple("pose", instant::Utils::Others::GetMilliSeconds()) );
@@ -181,7 +194,7 @@ int main(int argc, char* argv[]) {
 
         tracker->draw(color);
         if(estimatedPose) {
-            camera->draw(color, cv::Mat(intrinsic)*pose);
+            camera->draw(color, intrinsic*pose);
         }
         cv::imshow("view", color);
         timestamps.push_back( ttuple("display", instant::Utils::Others::GetMilliSeconds()) );
@@ -205,6 +218,17 @@ int main(int argc, char* argv[]) {
             elapsed_string += instant::Utils::String::Format("%s:%.1fms ", std::get<0>(item).c_str(), std::get<1>(item));
         }
         std::cout << instant::Utils::String::Format("[#%05d] %s tracked:%05d lastIdx:%05d", frame, elapsed_string.c_str(), trackedCount, lastIdx) << std::endl;
+
+        window.setBackgroundColor(); // black by default
+        window.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem());
+        if(map.getPoints(visopt::Map::reconstructed).size() > 0) {
+            window.showWidget("point_cloud", cv::viz::WCloud(map.getPoints(visopt::Map::reconstructed), cv::viz::Color::green()));
+        }
+        if(path.size() > 0) {
+            window.showWidget("path", cv::viz::WTrajectory(path, cv::viz::WTrajectory::BOTH, 0.1, cv::viz::Color::red()));
+            window.showWidget("camera", cv::viz::WTrajectoryFrustums(last, cv::Matx33d(intrinsic), 10.0, cv::viz::Color::yellow()));
+        }
+        window.spinOnce(1, true);
 	}
 	return 0;
 }

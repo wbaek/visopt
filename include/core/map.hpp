@@ -8,7 +8,7 @@
 namespace visopt {
 class Map : public Base {
     public:
-        enum Status {unset=0, reconstructed=1, outlier=100};
+        enum Status {unset=0, reconstructed=1, outlier=100, all=1000};
         virtual const size_t size() const {
             return this->points.size();
         }
@@ -22,6 +22,18 @@ class Map : public Base {
                     }
             }
             return selected;
+        }
+        virtual const std::vector<cv::Point3f> getPoints(const Status& status = Map::all) {
+            if( status == Map::all ) {
+                return this->points;
+            } else {
+                std::vector<cv::Point3f> selected;
+                for(size_t i=0; i<this->status.size(); i++) {
+                    if(this->status[i] == status)
+                        selected.push_back( this->points[i] );
+                }
+                return selected;
+            }
         }
         virtual const std::vector<cv::Point3f> getPoints(const std::vector<int>& idx_list = std::vector<int>()) const {
             if(idx_list.size() == 0) {
