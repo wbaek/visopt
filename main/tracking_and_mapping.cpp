@@ -14,6 +14,7 @@
 #include "tracker/opticalflow.hpp"
 #include "pose/fundamental.hpp"
 #include "pose/camera_pose.hpp"
+#include "pose/kalman_filter.hpp"
 #include "core/keyframe.hpp"
 #include "reconstructor/triangulator.hpp"
 #include "core/map.hpp"
@@ -98,6 +99,7 @@ int main(int argc, char* argv[]) {
     visopt::Extractor* extractor = new visopt::GoodFeatureToTrack();
     visopt::Pose* fundamental = new visopt::Fundamental();
     visopt::Pose* camera = new visopt::CameraPose(cv::Mat(intrinsic));
+    visopt::KalmanFilter* kalmanFilter = new visopt::KalmanFilter();
     std::vector<visopt::KeyFrame> keyframes;
     visopt::Reconstructor* reconstructor = new visopt::Triangulator(cv::Mat(intrinsic));
     visopt::Map map;
@@ -142,7 +144,9 @@ int main(int argc, char* argv[]) {
             std::vector<cv::Point3f> mapPoints = map.getPoints( indicies );
             std::vector<cv::Point2f> imagePoints = currentFrame.getPoints( indicies );
             pose = camera->calc(mapPoints, imagePoints, status);
-            /*
+            kalmanFilter->predict();
+            pose = kalmanFilter->correct( pose );
+            //*
             for(size_t i=0; i<status.size(); i++) {
                 if(status[i]) continue;
                 map.status[ indicies[i] ] = visopt::Map::outlier;
