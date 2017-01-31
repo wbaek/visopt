@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 	std::string dataPath;
     bool verbose = false;
 	int argopt, optionIndex=0;
-    float focallength = 245;
+    float focallength = 235;
     while( (argopt = getopt_long(argc, argv, "hp:f:v", longOptions, &optionIndex)) != -1 ) {
         switch( argopt ) {
             case 'p':
@@ -91,8 +91,8 @@ int main(int argc, char* argv[]) {
     cv::viz::Viz3d window("Coordinate Frame");
     {
         window.setWindowSize(cv::Size(500,500));
-        window.setWindowPosition(cv::Point(color.size().width,30));
-        cv::Point3d cam_pos(200.0f,300.0f,600.0f), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(0.0f,1.0f,0.0f);
+        window.setWindowPosition(cv::Point(color.size().width,500));
+        cv::Point3d cam_pos(60.0f, -600.0f, -500.0), cam_focal_point(0.0f,0.0f,100.0f), cam_y_dir(0.0f,1.0f,0.0f);
         cv::Affine3f cam_pose = cv::viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
         window.setViewerPose(cam_pose);
         window.spinOnce(1, true);
@@ -164,8 +164,8 @@ int main(int argc, char* argv[]) {
             }
             //*/
             
-            path.push_back( cv::Affine3d( visopt::Pose::toGL(pose) ) );
-            last[0] = cv::Affine3d( visopt::Pose::toGL(pose) );
+            path.push_back( cv::Affine3d( -pose ) );
+            last[0] = cv::Affine3d( -pose );
             estimatedPose = true;
         }
         timestamps.push_back( ttuple("pose", instant::Utils::Others::GetMilliSeconds()) );
@@ -220,7 +220,7 @@ int main(int argc, char* argv[]) {
         std::cout << instant::Utils::String::Format("[#%05d] %s tracked:%05d lastIdx:%05d", frame, elapsed_string.c_str(), trackedCount, lastIdx) << std::endl;
 
         window.setBackgroundColor(); // black by default
-        window.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem());
+        window.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem(100.0));
         if(map.getPoints(visopt::Map::reconstructed).size() > 0) {
             window.showWidget("point_cloud", cv::viz::WCloud(map.getPoints(visopt::Map::reconstructed), cv::viz::Color::green()));
         }
