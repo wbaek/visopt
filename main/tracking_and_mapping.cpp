@@ -11,6 +11,7 @@
 #include <opencv2/viz.hpp>
 
 #include "extractor/goodfeaturetotrack.hpp"
+#include "extractor/agast.hpp"
 #include "tracker/opticalflow.hpp"
 #include "pose/fundamental.hpp"
 #include "pose/camera_pose.hpp"
@@ -39,9 +40,9 @@ int main(int argc, char* argv[]) {
         {"verboase",  no_argument,       0, 'v'},
     };
 
-	std::string dataPath;
+    std::string dataPath;
     bool verbose = false;
-	int argopt, optionIndex=0;
+    int argopt, optionIndex=0;
     float focallength = 235;
     while( (argopt = getopt_long(argc, argv, "hp:f:v", longOptions, &optionIndex)) != -1 ) {
         switch( argopt ) {
@@ -105,7 +106,7 @@ int main(int argc, char* argv[]) {
                                              0,  0,  1) );
 
     visopt::Tracker* tracker = new visopt::OpticalFlow();
-    visopt::Extractor* extractor = new visopt::GoodFeatureToTrack();
+    visopt::Extractor* extractor = new visopt::Agast(); //new visopt::GoodFeatureToTrack();
     visopt::Pose* fundamental = new visopt::Fundamental();
     visopt::Pose* camera = new visopt::CameraPose(intrinsic);
     visopt::KalmanFilter* kalmanFilter = new visopt::KalmanFilter();

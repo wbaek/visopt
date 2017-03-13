@@ -57,7 +57,7 @@ INCLUDE += -I${DEPENDENCY_PATH}instant/include
 LIB_PATH += -L${DEPENDENCY_PATH}instant/lib
 DYNAMIC_LIBS += -linstant
 
-INCLUDE += -I/usr/local/include -I/usr/local/opt/eigen/include/eigen3
+INCLUDE += -I/usr/local/include -I/usr/local/opt/eigen/include/eigen3 -I/usr/local/opt/opencv3/include
 LIB_PATH += -L/usr/local/lib
 DYNAMIC_LIBS += `pkg-config --libs opencv`
 
