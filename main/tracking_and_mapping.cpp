@@ -67,23 +67,24 @@ int main(int argc, char* argv[]) {
 
     // setup data with visualization
     std::vector<std::string> filelist;
-    cv::VideoCapture capture;
+    cv::VideoCapture capture(1);
+    capture.isOpened();
     cv::Mat color;
     if (instant::Utils::Filesystem::IsDirectory(dataPath)) {
         instant::Utils::Filesystem::GetFileNames(dataPath, filelist);
         color = cv::imread(filelist[0], CV_LOAD_IMAGE_COLOR);
     } else {
-        capture = cv::VideoCapture(dataPath);
-        capture.set(CV_CAP_PROP_FPS, 60);
+        //capture = cv::VideoCapture(dataPath);
+        //capture.set(CV_CAP_PROP_FPS, 60);
         for(int i=0; i<1; i++){
             capture.grab();
             capture.retrieve(color);
         }
-        double scale = 1.0/4.0;
-        cv::Size size(color.size().width * scale, color.size().height * scale);
-        cv::resize(color, color, size);
+        //double scale = 1.0/4.0;
+        //cv::Size size(color.size().width * scale, color.size().height * scale);
+        //cv::resize(color, color, size);
+        cv::Size size = color.size();
         std::cout << size.width << "x" << size.height << std::endl;
-
     }
 
     cv::namedWindow("view");
@@ -129,10 +130,10 @@ int main(int argc, char* argv[]) {
         } else {
             capture.grab();
             capture.retrieve(color);
-            double scale = 1.0/4.0;
-            cv::Size size(color.size().width * scale, color.size().height * scale);
-            if( size.width <= 0 || size.height <= 0 ) break;
-            cv::resize(color, color, size);
+            //double scale = 1.0/4.0;
+            //cv::Size size(color.size().width * scale, color.size().height * scale);
+            //if( size.width <= 0 || size.height <= 0 ) break;
+            //cv::resize(color, color, size);
         }
         timestamps.push_back( ttuple("image", instant::Utils::Others::GetMilliSeconds()) );
 

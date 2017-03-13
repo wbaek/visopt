@@ -6,7 +6,7 @@
 namespace visopt {
 class Agast : public Extractor {
     public:
-        Agast(const int threshold=30, const bool nonmaxSuppression=true, const int gaussianBlur=7);
+        Agast(const int threshold=15, const bool nonmaxSuppression=true, const int gaussianBlur=7);
         virtual ~Agast() {
         }
 

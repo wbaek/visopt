@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     int cornerY=7;
     float cornerSize=20.0;
     int argopt, optionIndex=0;
-    while( (argopt = getopt_long(argc, argv, "hc:p:", longOptions, &optionIndex)) != -1 ) {
+    while( (argopt = getopt_long(argc, argv, "hc:x:y:s:", longOptions, &optionIndex)) != -1 ) {
         switch( argopt ) {
             case 'c':
                 instant::Utils::String::ToPrimitive(optarg, cameraIndex);
